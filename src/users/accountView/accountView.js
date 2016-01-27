@@ -3,27 +3,44 @@
 angular.module('flintAndSteel')
 .controller('AccountViewCtrl',
     [
-        '$scope', '$state', 'toastSvc', 'loginSvc',
-        function($scope, $state, toastSvc, loginSvc) {
+        '$scope', '$state', 'toastSvc', 'userSvc', 'ideaSvc',
+        function($scope, $state, toastSvc, userSvc, ideaSvc) {
             "use strict";
 
             // NOTE: Nothing can go above this!
-            if (!loginSvc.isUserLoggedIn()) {
+            if (!userSvc.isUserLoggedIn()) {
                 $state.go('home');
             }
+            else {
+                // Replace this with a DB read from logged in user
+                $scope.user = {
+                    username: userSvc.getProperty('username'),
+                    password: userSvc.getProperty('password'),
+                    name: userSvc.getProperty('name'),
+                    email: userSvc.getProperty('email')
+                };
+            }
 
-            // Replace this with a DB read from logged in user
-            $scope.user = {
-                username: loginSvc.getProperty('username'),
-                password: loginSvc.getProperty('password'),
-                name: loginSvc.getProperty('name'),
-                email: loginSvc.getProperty('email')
-            };
+            $scope.userIdeas = [];
+
+            ideaSvc.getIdeaHeaders().then(function getIdeaHeadersSuccess(response) {
+
+                // Find all User Ideas
+                if (userSvc.isUserLoggedIn()) {
+                    var userId = userSvc.getProperty('_id');
+                    $scope.userIdeas = response.data.filter(function(idea) {
+                        return userId === idea.authorId;
+                    });
+                }
+
+            }, function getIdeaHeadersError(response) {
+                console.log(response);
+            });
+
             // /Replace
-
             $scope.logout = function logout() {
-                var accountName = loginSvc.getProperty('name');
-                loginSvc.logout();
+                var accountName = userSvc.getProperty('name');
+                userSvc.logout();
 
                 toastSvc.show(accountName + ' has been logged out!', { duration: 5000 });
 

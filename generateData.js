@@ -1,101 +1,172 @@
-var chalk = require('chalk'),
-    mongodb = require('mongodb'),
-    UserModel = require('./server/users/userModel'),
-    IdeaModel = require('./server/ideas/ideaModel'),
-    EventModel = require('./server/events/eventModel');
+"use strict";
 
-function getPreviousWeek(originalDate){
+function getPreviousWeek(originalDate) {
     var lastWeek = new Date(originalDate.getFullYear(), originalDate.getMonth(), originalDate.getDate() - 7);
-    return lastWeek ;
+    return lastWeek;
 }
 
-function getFollowingWeek(originalDate){
+function getFollowingWeek(originalDate) {
     var nextWeek = new Date(originalDate.getFullYear(), originalDate.getMonth(), originalDate.getDate() + 7);
-    return nextWeek ;
+    return nextWeek;
 }
 
-var DB = new mongodb.Db('flintandsteel-dev', new mongodb.Server('localhost', 27017));
+var now = ISODate(),
+    userIds = [],
+    eventIds = [];
 
-DB.open(function(err, db) {
-    "use strict";
 
-    db.createCollection('users', function(errUsers) {
-        if (errUsers) {
-            console.log(errUsers);
+db = connect('localhost:27017/flintandsteel-dev');
+
+// create collections
+db.createCollection('users');
+db.createCollection('ideas');
+db.createCollection('comments');
+db.createCollection('events');
+
+// create users
+var insertResult = db.users.insert(
+    [
+        {
+            firstName: 'Guybrush',
+            lastName: 'Threepwood',
+            fullName: 'Guybrush Threepwood',
+            username: 'test1',
+            email: 'test1@test.com',
+            nickname: 'Threepy',
+            title: 'Hippy Lumberjack'
+        },
+        {
+            firstName: 'Rick',
+            lastName: 'Sanchez',
+            fullName: 'Rick Sanchez',
+            username: 'test2',
+            email: 'test2@test.com',
+            nickname: 'Dirty',
+            title: 'Street Pharmacist'
+        },
+        {
+            firstName: 'Dick',
+            lastName: 'Dickerson',
+            fullName: 'Dick Dickerson',
+            username: 'test3',
+            email: 'test3@test.com',
+            nickname: 'The Fracker',
+            title: 'Money Bags Oil Man'
+        },
+        {
+            firstName: 'Test',
+            lastName: 'testerson',
+            fullName: 'Test Testerson',
+            username: 'test4',
+            email: 'test4@test.com',
+            nickname: 'The Tester',
+            title: 'Testin\' All Day'
         }
-        else {
-            var userObjs = [];
-            userObjs.push(UserModel.create("Guybrush", "Threepwood", "Guybrush Threepwood", "test1", "test1@test.com", "Threepy", "Hippy Lumberjack"));
-            userObjs.push(UserModel.create("Rick", "Sanchez", "Rick Sanchez", "test2", "test2@test.com", "Dirty", "Street Pharmacist"));
-            userObjs.push(UserModel.create("Dick", "Dickerson", "Dick Dickerson", "test3", "test3@test.com", "The Fracker", "Money Bags Oil Man"));
-            var insertedUserIds;
-            db.collection('users').insert(userObjs,
-                function(err, results) {
-                    if (err) {
-                        console.log(chalk.bgRed(err));
-                        return;
-                    }
-                    else {
-                        console.log(chalk.bgGreen('Users created in the users collection.'));
-                        insertedUserIds = results.insertedIds;
-                    }
-                }
-            );
-            db.createCollection('events', function(errEvents) {
-                if (errUsers) {
-                    console.log(errEvents);
-                }
-                else {
-                    var now = new Date();
-                    var eventObjs = [];
-                    eventObjs.push(EventModel.create("In Progress Event 1", "USMAY", now.toISOString(), getFollowingWeek(now).toISOString()));
-                    eventObjs.push(EventModel.create("In Progress Event 2", "USMKE", now.toISOString(), getFollowingWeek(now).toISOString()));
-                    eventObjs.push(EventModel.create("Completed Event 1", "USTWB", getPreviousWeek(getPreviousWeek(now)).toISOString(), getPreviousWeek(now).toISOString()));
-                    var insertedEventIds;
-                    db.collection('events').insert(eventObjs,
-                        function(err, results) {
-                            if (err) {
-                                console.log(chalk.bgRed(err));
-                                return;
-                            }
-                            else {
-                                console.log(chalk.bgGreen('Events created in the events collection.'))
-                                insertedEventIds = results.insertedIds;
-                            }
-                        }
-                    );
-                    db.createCollection('comments', function(errComments) {
-                        if (errComments) {
-                            console.log(errComments);
-                        }
-                        else {
-                          db.createCollection('ideas', function(errIdea) {
-                              if (errIdea) {
-                                  console.log(errIdea);
-                              }
-                              else {
-                                  var ideaObjs = [];
-                                  ideaObjs.push(IdeaModel.create("Guybrush's Test Idea", "This is an idea description.", insertedUserIds[0], insertedEventIds[0], [], []));
-                                  ideaObjs.push(IdeaModel.create("Rick's Test Idea", "This is Mr. Sanchez\'s brilliant idea.", insertedUserIds[1], insertedEventIds[1], [], []));
-                                  ideaObjs.push(IdeaModel.create("Dick's Test Idea", "This is \"The Fracker\'s\" master plan.", insertedUserIds[2], insertedEventIds[2], [], []));
-                                  db.collection('ideas').insert(ideaObjs,
-                                      function(err, results) {
-                                          if (err) {
-                                              console.log(chalk.bgRed(err));
-                                              return;
-                                          }
-                                          else {
-                                              console.log(chalk.bgGreen('Ideas created in the ideas collection.'));
-                                              db.close();
-                                          }
-                                      }
-                                  );
-                              }
-                          });
-                        }
-                    });
-                }
-            });
-        }
-    });
+    ]
+);
+print('INSERT RESULT: Inserted ' + insertResult.nInserted + ' documents into users collection.');
+
+// get the user ids
+db.users.find({}, { _id: 1 }).forEach(function(user) {
+    userIds.push(user._id);
 });
+
+// create events
+insertResult = db.events.insert(
+    [
+        {
+            name: 'In Progress Event 1',
+            location: 'USMAY',
+            startDate: now,
+            endDate: getFollowingWeek(now)
+        },
+        {
+            name: 'In Progress Event 2',
+            location: 'USMKE',
+            startDate: now,
+            endDate: getFollowingWeek(now)
+        },
+        {
+            name: 'Completed Event 1',
+            location: 'USTWB',
+            startDate: getPreviousWeek(getPreviousWeek(now)),
+            endDate: getPreviousWeek(now)
+        }
+    ]
+);
+print('INSERT RESULT: Inserted ' + insertResult.nInserted + ' documents into events collection.');
+
+// get the event ids
+db.events.find({}, { _id: 1 }).forEach(function(user) {
+    eventIds.push(user._id);
+});
+
+// create ideas
+insertResult = db.ideas.insert(
+    [
+        {
+            title: 'Guybrush\'s Test Idea',
+            description: 'This is an idea description.',
+            authorId: userIds[0],
+            eventId: eventIds[0],
+            timeCreated: now,
+            timeModified: now,
+            tags: [],
+            rolesreq: [],
+            likes: [],
+            updates: [],
+            comments: [],
+            backs: [{
+                _id: new ObjectId(),
+                text: 'Idea Owner',
+                authorId: userIds[0],
+                time: ISODate(),
+                types: [{ name: 'Owner', _lowername: 'owner' }]
+            }],
+            team: [{ _id: new ObjectId(), memberId: userIds[0] }]
+        },
+        {
+            title: 'Rick\'s Test Idea',
+            description: 'This is Mr. Sanchez\'s brilliant idea.',
+            authorId: userIds[1],
+            eventId: eventIds[1],
+            timeCreated: now,
+            timeModified: now,
+            tags: [],
+            rolesreq: [],
+            likes: [],
+            updates: [],
+            comments: [],
+            backs: [{
+                _id: new ObjectId(),
+                text: 'Idea Owner',
+                authorId: userIds[1],
+                time: ISODate(),
+                types: [{ name: 'Owner', _lowername: 'owner' }]
+            }],
+            team: [{ _id: new ObjectId(), memberId: userIds[1] }]
+        },
+        {
+            title: 'Dick\'s Test Idea',
+            description: 'This is "The Fracker\'s" master plan.',
+            authorId: userIds[2],
+            eventId: eventIds[2],
+            timeCreated: now,
+            timeModified: now,
+            tags: [],
+            rolesreq: [],
+            likes: [],
+            updates: [],
+            comments: [],
+            backs: [{
+                _id: new ObjectId(),
+                text: 'Idea Owner',
+                authorId: userIds[2],
+                time: ISODate(),
+                types: [{ name: 'Owner', _lowername: 'owner' }]
+            }],
+            team: [{ _id: new ObjectId(), memberId: userIds[2] }]
+        }
+    ]
+);
+print('INSERT RESULT: Inserted ' + insertResult.nInserted + ' documents into ideas collection.');
