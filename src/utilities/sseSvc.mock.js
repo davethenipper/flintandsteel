@@ -11,22 +11,22 @@ angular.module('flintAndSteel')
             var cb;
 
             svc.isActive = false;
-            svc.simulate = function simulate() {
-                cb(null);
+            svc.simulate = function simulate(idea) {
+                cb(idea);
             };
 
-            svc.create = function create(eventName, eventLoc, callback) {
+            svc.subscribe = function create(eventName, eventLoc, callback) {
                 svc.isActive = true;
                 cb = callback;
             };
 
-            svc.destroy = function destroy() {
+            svc.unsubscribe = function destroy() {
                 svc.isActive = false;
             };
 
             return {
-                create: svc.create,
-                destroy: svc.destroy,
+                subscribe: svc.subscribe,
+                unsubscribe: svc.unsubscribe,
                 simulate: svc.simulate,
                 isActive: function() {
                     return svc.isActive;

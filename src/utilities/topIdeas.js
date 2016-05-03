@@ -1,19 +1,19 @@
 /* global angular */
 
 angular.module('flintAndSteel')
-.directive('helpCard', 
+.directive('topIdeas',
     [
         function() {
             "use strict";
 
-            
-            
             return {
                 restrict: 'E',
                 scope: {
-                    faq: '='
+                    title: '@',
+                    ideaslist: '=',
+                    sort: '='
                 },
-                templateUrl: 'homeView/helpCard/helpCard.tpl.html'
+                templateUrl: 'utilities/topIdeas.tpl.html'
             };
         }
     ]

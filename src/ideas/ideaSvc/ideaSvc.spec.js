@@ -5,43 +5,86 @@
 /* global it */
 /* global expect */
 /* global moment */
+/* global spyOn */
 
 describe('ideaSvc', function() {
     "use strict";
 
-    var ideaSvc, $httpBackend, dummyIdea;
+    var ideaSvc, $httpBackend, dummyIdea, dummyUser, dummyRes, userSvc;
 
     beforeEach(module('flintAndSteel'));
 
-    beforeEach(inject(function(_ideaSvc_, _$httpBackend_) {
+    beforeEach(inject(function(_ideaSvc_, _$httpBackend_, _userSvc_) {
         ideaSvc = _ideaSvc_;
         $httpBackend = _$httpBackend_;
+        userSvc = _userSvc_;
+
+        spyOn(userSvc, 'getProperty').and.callFake(function(prop) {
+            if (prop === '_id') {
+                return 'test_id';
+            }
+            else if (prop === 'token') {
+                return 'test_token';
+            }
+        });
 
         dummyIdea = {
             _id: 0,
             title: 'Test title',
             author: 'Guybrush Threepwood',
             description: 'Test description',
+            eventId: 1,
             likes: 45,
             comments: [
                 {
                     text: 'Yeah, mhm.',
                     name: 'Dude',
-                    time: moment().subtract(4, 'days').calendar()
+                    timeCreated: moment().subtract(4, 'days').calendar()
                 }
             ],
             backs: [
                 {
                     text: 'Some resources',
                     name: 'Some Guy',
-                    time: moment().calendar(),
+                    timeCreated: moment().calendar(),
                     types: [
                         { name: 'Experience' },
                         { name: 'Knowledge' }
                     ]
                 }
+            ],
+            rolesreq: [
+                {
+                    name: 'Experience',
+                    _lowername: 'experience'
+                }
+            ],
+            complexity: [
+                {
+                    value: 4,
+                    authorId: 1,
+                    stars: [
+                        { filled: true },
+                        { filled: true },
+                        { filled: true },
+                        { filled: true },
+                        { filled: false }
+                    ]
+                }
             ]
         };
+
+        dummyUser = {
+            id: 'dummy_user',
+            username: 'theBestDummy',
+            password: 'password',
+            name: 'Dummy User',
+            likedIdeas: ['mock_idea', 'dummy_idea']
+        };
+
+        dummyRes = dummyUser;
+        dummyRes.password = undefined;
+        dummyRes.status = 'AUTH_OK';
     }));
 
     afterEach(function() {
@@ -263,7 +306,7 @@ describe('ideaSvc', function() {
                 _id: 'dummy_back',
                 text: 'Just Experience',
                 name: 'Some Guy',
-                time: moment().calendar(),
+                timeCreated: moment().calendar(),
                 types: [
                     { name: 'Experience' }
                 ]
@@ -297,21 +340,86 @@ describe('ideaSvc', function() {
                 title: dummyIdea.title,
                 description: dummyIdea.description,
                 tags: dummyIdea.tags,
-                rolesreq: dummyIdea.rolesreq
+                rolesreq: dummyIdea.rolesreq,
+                eventId: 1
             };
 
             patchOperation = [
                 { operation: 'modify', path: 'title', value: JSON.stringify(smallDummyIdea.title) },
                 { operation: 'modify', path: 'description', value: JSON.stringify(smallDummyIdea.description) },
                 { operation: 'modify', path: 'tags', value: JSON.stringify(smallDummyIdea.tags) },
-                { operation: 'modify', path: 'rolesreq', value: JSON.stringify(smallDummyIdea.rolesreq) }
+                { operation: 'modify', path: 'rolesreq', value: JSON.stringify(smallDummyIdea.rolesreq) },
+                { operation: 'modify', path: 'eventId', value: JSON.stringify(smallDummyIdea.eventId) }
             ];
         });
 
         it('should edit an existing idea', function() {
             $httpBackend.expectPATCH('/api/v1/ideas/' + dummyIdea._id, patchOperation);
 
-            ideaSvc.editIdea(dummyIdea._id, dummyIdea.title, dummyIdea.description, dummyIdea.tags, dummyIdea.rolesreq).then(function(response) {
+            ideaSvc.editIdea(dummyIdea._id, dummyIdea.title, dummyIdea.description, dummyIdea.tags, dummyIdea.rolesreq, dummyIdea.eventId)
+            .then(function(response) {
+                expect(response.data).toBe('OK');
+            }, function() { });
+
+            $httpBackend.flush();
+        });
+
+        describe('ideaSvc.getUserIdeasById', function() {
+            it('should query the server for ideas by a user when an id is supplied', function() {
+                $httpBackend.whenGET('/api/v1/ideas/search?forterm=1&inpath=authorId').respond(200, dummyRes);
+                ideaSvc.getUserIdeasById(1).then(function() {}, function() {});
+                $httpBackend.flush();
+            });
+
+            it('should reject if an id was not supplied', function() {
+                ideaSvc.getUserIdeasById().catch(function(error) {
+                    expect(error).toEqual('No userId supplied');
+                });
+
+            });
+        });
+
+        describe('ideaSvc.getUserBacksById', function() {
+            it('should query the server idea backs by a user when an id is supplied', function() {
+                $httpBackend.whenGET('/api/v1/ideas/search?forterm=1&inpath=backs.authorId').respond(200, dummyRes);
+                ideaSvc.getUserBacksById(1).then(function() {}, function() {});
+                $httpBackend.flush();
+            });
+
+            it('should reject if an id was not supplied', function() {
+                ideaSvc.getUserBacksById().catch(function(error) {
+                    expect(error).toEqual('No userId supplied');
+                });
+
+            });
+        });
+    });
+
+    describe('ideaSvc.editIdeaRating', function() {
+        var editIdeaHandler, smallDummyIdea, patchOperation;
+
+        beforeEach(function() {
+            editIdeaHandler = $httpBackend.whenPATCH('/api/v1/ideas/' + dummyIdea._id, patchOperation).respond(200, 'OK');
+            smallDummyIdea = {
+                id: dummyIdea._id,
+                title: dummyIdea.title,
+                description: dummyIdea.description,
+                tags: dummyIdea.tags,
+                rolesreq: dummyIdea.rolesreq,
+                eventId: 1,
+                complexity: dummyIdea.complexity
+            };
+
+            patchOperation = [
+                { operation: 'modify', path: 'complexity', value: JSON.stringify(smallDummyIdea.complexity) }
+            ];
+        });
+
+        it('should edit an existing idea', function() {
+            $httpBackend.expectPATCH('/api/v1/ideas/' + dummyIdea._id, patchOperation).respond(200, 'OK');
+
+            ideaSvc.editIdeaRating(dummyIdea._id, dummyIdea.complexity)
+            .then(function(response) {
                 expect(response.data).toBe('OK');
             }, function() { });
 

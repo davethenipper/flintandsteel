@@ -26,10 +26,13 @@ describe('IdeasViewCtrl', function() {
     var fakeWindow = {
         location: {
             href: ''
-        }
+        },
+        ga: function() {} // Google Analytics
     };
 
     beforeEach(module('flintAndSteel'));
+    // needed because $state takes us to home by default
+    beforeEach(module('homeView/homeView.tpl.html'));
 
     beforeEach(inject(function(_$rootScope_, _$q_, $controller, _$stateParams_, _$mdDialog_, _ideaSvcMock_, _userSvcMock_, _$state_, _toastSvc_, _sseSvcMock_) {
         $rootScope = _$rootScope_;
@@ -105,14 +108,14 @@ describe('IdeasViewCtrl', function() {
 
         it('should notify if idea is not found', function() {
             spyOn(ideaSvcMock, 'getIdea').and.callFake(function getIdea() {
-                return $q.when({data: 'IDEA_NOT_FOUND'});
+                return $q.reject();
             });
+            spyOn(console, 'log').and.callFake(function() {});
 
             ctrl.refreshIdea();
-            ideaSvcMock.getIdea().then(function() {
-                expect(toastSvc.show).toHaveBeenCalled();
-                expect($state.go).toHaveBeenCalled();
-            });
+            scope.$digest();
+            expect(toastSvc.show).toHaveBeenCalled();
+            expect($state.go).toHaveBeenCalled();
         });
 
         it('should output a console log if an idea error', function() {
@@ -507,103 +510,6 @@ describe('IdeasViewCtrl', function() {
                 expect(idea.title).not.toBe(title);
                 expect(idea.title).toBe("New Title");
             });
-        });
-
-        it('should allow the author to add a tag', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2']
-            };
-            ctrl.addTag('TestTag3');
-
-            expect(scope.idea.tags.length).not.toBe(2);
-            expect(scope.idea.tags.length).toBe(3);
-            scope.idea = {};
-        });
-
-        it('should allow the author to remove a tag', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2']
-            };
-            ctrl.removeTag('TestTag2');
-
-            expect(scope.idea.tags.length).not.toBe(2);
-            expect(scope.idea.tags.length).toBe(1);
-            scope.idea = {};
-        });
-
-        it('should not add duplicate tags', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2']
-            };
-            ctrl.addTag('TestTag2');
-
-            expect(scope.idea.tags.length).not.toBe(3);
-            expect(scope.idea.tags.length).toBe(2);
-            scope.idea = {};
-        });
-
-        it('should not add more than 5 tags', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2', 'TestTag3', 'TestTag4', 'TestTag5']
-            };
-            ctrl.addTag('TestTag6');
-
-            expect(scope.idea.tags.length).not.toBe(6);
-            expect(scope.idea.tags.length).toBe(5);
-            scope.idea = {};
-        });
-
-        it('should not add a blank tag', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2']
-            };
-            ctrl.addTag('');
-
-            expect(scope.idea.tags.length).not.toBe(3);
-            expect(scope.idea.tags.length).toBe(2);
-        });
-
-        it('should remove special characters from tags', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2']
-            };
-            ctrl.addTag('hello!@world&*@');
-
-            expect(scope.idea.tags.length).toBe(3);
-            expect(ctrl.doesTagExist('hello!@world&*@')).toBe(false);
-            expect(ctrl.doesTagExist('HelloWorld')).toBe(true);
-        });
-
-        it('should use CamelCase for tags', function() {
-            scope.idea = {
-                title: 'Test Title',
-                authorId: 3,
-                description: 'This is a test idea.',
-                tags: ['TestTag1', 'TestTag2']
-            };
-            ctrl.addTag('This is a tag');
-
-            expect(scope.idea.tags.length).toBe(3);
-            expect(ctrl.doesTagExist('This is a tag')).toBe(false);
-            expect(ctrl.doesTagExist('ThisIsATag')).toBe(true);
         });
 
         it('should save the last edited date/time', function() {
@@ -1256,110 +1162,6 @@ describe('IdeasViewCtrl', function() {
         });
     });
 
-    describe('ctrl.doesTagExist', function() {
-        var mockIdea;
-
-        beforeEach(function() {
-            mockIdea = ideaSvcMock.getIdea();
-            scope.idea = mockIdea.$$state.value.data;
-        });
-
-        it('should return true if tag exists', function() {
-            expect(ctrl.doesTagExist(scope.idea.tags[0])).toBe(true);
-        });
-
-        it('should return false if tag does not exist', function() {
-            expect(ctrl.doesTagExist('noneOfTheTags')).toBe(false);
-        });
-    });
-
-    describe('ctrl.addTag', function() {
-        var tagLength, expectLength, mockIdea;
-
-        beforeEach(function() {
-            mockIdea = ideaSvcMock.getIdea();
-            scope.idea = mockIdea.$$state.value.data;
-            tagLength = scope.idea.tags.length;
-        });
-
-        it('should increase the tag size if tag does not exist', function() {
-            expectLength = tagLength + 1;
-            ctrl.addTag('this is a new tag');
-            expect(scope.idea.tags.length).toBe(expectLength);
-        });
-
-        it('should not increase the tag size if tag does exist', function() {
-            expectLength = tagLength + 1;
-            ctrl.addTag('1');
-            expect(scope.idea.tags.length).toBe(expectLength);
-            ctrl.addTag('1');
-            expect(scope.idea.tags.length).toBe(expectLength);
-        });
-
-        it('should not increase the tag size if there are already 5 tags', function() {
-            ctrl.addTag('3');
-            ctrl.addTag('4');
-            ctrl.addTag('5');
-            expect(scope.idea.tags.length).toBe(5);
-            ctrl.addTag('6');
-            expect(scope.idea.tags.length).toBe(5);
-        });
-
-        it('should not increase the tag size if tag is empty', function() {
-            ctrl.addTag('');
-            expect(scope.idea.tags.length).toBe(tagLength);
-        });
-    });
-
-    describe('ctrl.tagKeyEvent', function() {
-        var keyEvent, tagLength, expectLength, mockIdea;
-
-        beforeEach(function() {
-            mockIdea = ideaSvcMock.getIdea();
-            scope.idea = mockIdea.$$state.value.data;
-            ctrl.tagInput = 'a tag';
-            keyEvent = {
-                keyCode: 13
-            };
-            tagLength = scope.idea.tags.length;
-        });
-
-        it('should call add Tag if enter is pushed', function() {
-            expectLength = tagLength + 1;
-            ctrl.tagKeyEvent(keyEvent);
-            expect(ctrl.tagInput).toBe("");
-            expect(scope.idea.tags.length).toBe(expectLength);
-        });
-
-        it('should not call add Tag if a key other than enter is pushed', function() {
-            keyEvent.keyCode = 14;
-            ctrl.tagKeyEvent(keyEvent);
-            expect(ctrl.tagInput).toBe('a tag');
-            expect(scope.idea.tags.length).toBe(tagLength);
-        });
-    });
-
-    describe('ctrl.removeTag', function() {
-        var tagLength, expectLength, mockIdea;
-
-        beforeEach(function() {
-            mockIdea = ideaSvcMock.getIdea();
-            scope.idea = mockIdea.$$state.value.data;
-            tagLength = scope.idea.tags.length;
-        });
-
-        it('should remove a tag if the tag exists', function() {
-            expectLength = tagLength - 1;
-            ctrl.removeTag('thisIsATag');
-            expect(scope.idea.tags.length).toBe(expectLength);
-        });
-
-        it('should not remove a tag if the tag does not exist', function() {
-            ctrl.removeTag('thisIsNotATag');
-            expect(scope.idea.tags.length).toBe(tagLength);
-        });
-    });
-
     describe('ctrl.parseTeamEmail', function() {
         var mockIdea = {};
 
@@ -1369,6 +1171,281 @@ describe('IdeasViewCtrl', function() {
 
             ctrl.parseTeamEmail();
             expect(scope.emailString).toBe('mailto:dvader@gmail.com;');
+        });
+    });
+
+    describe('sse behavior', function() {
+        it('should have created the sse handler', function() {
+            expect(sseSvcMock.isActive()).toBe(true);
+        });
+
+        describe('sse trigger with idea', function() {
+            var tempIdea;
+            beforeEach(function() {
+                tempIdea = {
+                    _id: 1337,
+                    title: "Idea Event",
+                    description: "I'm just going to be here a minute."
+                };
+
+                spyOn(ctrl, 'refreshTeam').and.callFake(function() {});
+            });
+
+            it('should call refreshTeam', function() {
+                sseSvcMock.simulate(tempIdea);
+                expect(ctrl.refreshTeam).toHaveBeenCalled();
+            });
+        });
+
+        describe('sse trigger with IDEA_NOT_FOUND', function() {
+            var tempIdea;
+            beforeEach(function() {
+                tempIdea = 'IDEA_NOT_FOUND';
+
+                spyOn($state, 'go').and.callThrough();
+                spyOn(toastSvc, 'show').and.callThrough();
+                spyOn(ctrl, 'refreshTeam').and.callFake(function() {});
+            });
+
+            it('should not call refreshTeam', function() {
+                sseSvcMock.simulate(tempIdea);
+                expect(ctrl.refreshTeam).not.toHaveBeenCalled();
+            });
+
+            it('should return to the home state', function() {
+                sseSvcMock.simulate(tempIdea);
+                expect($state.go).toHaveBeenCalledWith('home');
+            });
+
+            describe('user is the author', function() {
+                beforeEach(function() {
+                    spyOn(ctrl, 'isUserAuthor').and.callFake(function() {
+                        return true;
+                    });
+                });
+
+                it('should show a succesfully deleted toast', function() {
+                    sseSvcMock.simulate(tempIdea);
+                    expect(toastSvc.show).toHaveBeenCalledWith('Your idea was successfully deleted.');
+                });
+            });
+
+            describe('user is not the author', function() {
+                beforeEach(function() {
+                    spyOn(ctrl, 'isUserAuthor').and.callFake(function() {
+                        return false;
+                    });
+                });
+
+                it('should show a surprise deleted post', function() {
+                    sseSvcMock.simulate(tempIdea);
+                    expect(toastSvc.show).toHaveBeenCalledWith('Oh no! The author just deleted that idea.');
+                });
+            });
+        });
+
+        describe('ctrl.editIdeaRating', function() {
+            var mockIdea;
+
+            beforeEach(function() {
+                mockIdea = ideaSvcMock.getIdea();
+                scope.idea = mockIdea.$$state.value.data;
+            });
+
+            it('should not edit if user is not logged in', function() {
+                spyOn(ideaSvcMock, 'editIdeaRating').and.callThrough();
+                //Logout as user
+                userSvcMock.logout();
+
+                //test function
+                ctrl.editIdeaRating(scope.idea);
+                expect(ideaSvcMock.editIdeaRating).not.toHaveBeenCalled();
+            });
+
+            it('should edit if user has logged in', function() {
+                spyOn(ideaSvcMock, 'editIdeaRating').and.callThrough();
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                //test function
+                ctrl.editIdeaRating(scope.idea);
+                expect(ideaSvcMock.editIdeaRating).toHaveBeenCalled();
+                scope.$digest();
+            });
+
+            it('should console log if issues with editIdeaRating', function() {
+                spyOn(ideaSvcMock, 'editIdeaRating').and.callFake(function editIdeaRating() {
+                    return $q.reject();
+                });
+                spyOn(console, 'log').and.callFake(function() {});
+
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                //test function
+                ctrl.editIdeaRating(scope.idea);
+                expect(ideaSvcMock.editIdeaRating).toHaveBeenCalled();
+                scope.$digest();
+                expect(console.log).toHaveBeenCalled();
+            });
+        });
+
+        describe('ctrl.updateStars', function() {
+            var mockIdea, mockStars;
+
+            beforeEach(function() {
+                mockIdea = ideaSvcMock.getIdea();
+                scope.idea = mockIdea.$$state.value.data;
+                mockStars = [
+                    { filled: true },
+                    { filled: true },
+                    { filled: false },
+                    { filled: false },
+                    { filled: false }
+                ];
+            });
+
+            it('should not update if data is null', function() {
+                scope.idea.complexity.push({value: 2, authorId: 1});
+                ctrl.updateStars(scope.idea.complexity[0]);
+                expect(scope.idea.complexity[0].stars).toEqual(mockStars);
+            });
+        });
+
+        describe('$scope.toggle', function() {
+            var mockIdea, mockValue;
+
+            beforeEach(function() {
+                mockIdea = ideaSvcMock.getIdea();
+                scope.idea = mockIdea.$$state.value.data;
+                mockValue = {
+                    value: 4,
+                    stars: [
+                        { filled: true },
+                        { filled: true },
+                        { filled: false },
+                        { filled: false },
+                        { filled: false }
+                    ],
+                    authorId: 1
+                };
+                spyOn(userSvcMock, 'getProperty').and.callThrough();
+            });
+
+            it('should not update if user is not logged in', function() {
+                //Logout as user
+                userSvcMock.logout();
+
+                scope.toggle(1, scope.idea.complexity);
+                expect(userSvcMock.getProperty).not.toHaveBeenCalled();
+            });
+
+            it('should update if user is logged in', function() {
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                scope.idea.complexity.push(mockValue);
+                scope.toggle(2, scope.idea.complexity);
+                expect(scope.idea.complexity[0].value).toBe(3);
+            });
+
+            it('should create a new rating if user has not rated', function() {
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                scope.toggle(2, scope.idea.complexity);
+                expect(scope.idea.complexity[0].value).toBe(3);
+            });
+        });
+
+        describe('$scope.hasUserRated', function() {
+            var mockIdea, mockValue, testReturn;
+
+            beforeEach(function() {
+                mockIdea = ideaSvcMock.getIdea();
+                scope.idea = mockIdea.$$state.value.data;
+                mockValue = {
+                    value: 4,
+                    stars: [
+                        { filled: true },
+                        { filled: true },
+                        { filled: false },
+                        { filled: false },
+                        { filled: false }
+                    ],
+                    authorId: 1
+                };
+            });
+
+            it('should return false if user has not rated', function() {
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                testReturn = scope.hasUserRated(scope.idea.complexity);
+                expect(testReturn).toBe(false);
+            });
+
+            it('should return true if user has rated', function() {
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+                scope.toggle(3, scope.idea.complexity);
+
+                testReturn = scope.hasUserRated(scope.idea.complexity);
+                expect(testReturn).toBe(true);
+            });
+
+            it('should return false if user is not logged in', function() {
+                //Logout as user
+                userSvcMock.logout();
+
+                testReturn = scope.hasUserRated(scope.idea.complexity);
+                expect(testReturn).toBe(false);
+            });
+        });
+
+        describe('$scope.loadUserRating', function() {
+            var mockIdea, mockValue, testReturn;
+
+            beforeEach(function() {
+                mockIdea = ideaSvcMock.getIdea();
+                scope.idea = mockIdea.$$state.value.data;
+                mockValue = {
+                    value: 4,
+                    stars: [
+                        { filled: true },
+                        { filled: true },
+                        { filled: false },
+                        { filled: false },
+                        { filled: false }
+                    ],
+                    authorId: 1
+                };
+            });
+
+            it('should not return a rating if user is logged out', function() {
+                //Logout as user
+                userSvcMock.logout();
+
+                testReturn = scope.loadUserRating(scope.idea.complexity);
+                expect(testReturn).toEqual({});
+            });
+
+            it('should not return a rating if user has not rate', function() {
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                testReturn = scope.loadUserRating(scope.idea.complexity);
+                expect(testReturn).toEqual({});
+            });
+
+            it('should return a rating if user has rated', function() {
+                //Login
+                userSvcMock.checkLogin(authorAccount);
+
+                scope.idea.complexity.push(mockValue);
+                testReturn = scope.loadUserRating(scope.idea.complexity);
+                expect(testReturn).toEqual(mockValue);
+            });
         });
     });
 });

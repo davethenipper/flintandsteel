@@ -9,13 +9,17 @@ angular.module('flintAndSteel', [
         'ui.router',
         'ngMaterial',
         'ngMessages',
-        'ui.identicon'
+        'ui.identicon',
+        'hc.marked'
     ]
 )
 .config([
-    '$urlRouterProvider', '$stateProvider', '$mdThemingProvider', '$httpProvider',
-    function($urlRouterProvider, $stateProvider, $mdThemingProvider, $httpProvider) {
+    '$urlRouterProvider', '$stateProvider', '$mdThemingProvider', '$httpProvider', 'markedProvider',
+    function($urlRouterProvider, $stateProvider, $mdThemingProvider, $httpProvider, markedProvider) {
         "use strict";
+
+        // Use GitHub Flavored Markdown ("gfm")
+        markedProvider.setOptions({gfm: true});
 
         $stateProvider
             .state('home', {
@@ -54,6 +58,11 @@ angular.module('flintAndSteel', [
                 templateUrl: 'about/about.tpl.html',
                 controller: ''
             })
+            .state('learn', {
+                url: '/learn',
+                templateUrl: 'learn/learn.tpl.html',
+                controller: 'LearnCtrl'
+            })
             .state('innovationdisclosure', {
                 url: '/innovationdisclosure',
                 templateUrl: 'innovationDisclosureView/innovationDisclosureView.tpl.html',
@@ -71,7 +80,6 @@ angular.module('flintAndSteel', [
             '900': 'bb1e32'
         });
         var rockstarterGrayMap = $mdThemingProvider.extendPalette('grey', {
-            '900': '6d6e71'
         });
 
         $mdThemingProvider.definePalette('rokstarter-red', rockstarterRedMap);
@@ -89,13 +97,27 @@ angular.module('flintAndSteel', [
 
         // Initialize get if not there
         if (!$httpProvider.defaults.headers.get) {
-            $httpProvider.defaults.headers.get = {};    
+            $httpProvider.defaults.headers.get = {};
         }
 
         // Disable IE ajax request caching
         $httpProvider.defaults.headers.get['If-Modified-Since'] = 'Mon, 26 Jul 1997 05:00:00 GMT';
         $httpProvider.defaults.headers.get['Cache-Control'] = 'no-cache';
         $httpProvider.defaults.headers.get.Pragma = 'no-cache';
+    }
+])
+.run(['$rootScope', '$location', '$window',
+    function($rootScope, $location, $window) {
+        "use strict";
+
+        $rootScope.$on('$stateChangeSuccess',
+            function() {
+                if (!$window.ga) {
+                    return;
+                }
+                $window.ga('send', 'pageview', { page: $location.path() });
+            }
+        );
     }
 ]);
 

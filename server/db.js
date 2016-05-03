@@ -203,8 +203,8 @@ module.exports = function(dbName, cb) {
                 idToChange = '',
                 path = '',
                 runUpdate = true;
-            
-            
+
+
             if (/append|create|modify/.test(command.operation)) {
                 valueObj = JSON.parse(command.value);
 
@@ -222,20 +222,23 @@ module.exports = function(dbName, cb) {
                         valueObj.commentId = new ObjectId(valueObj.commentId);
                     }
                     else if (command.path === 'eventId') {
-                        valueObj = new ObjectId(valueObj);
+                        // We could have no event tagged for the idea
+                        if (valueObj !== '') {
+                            valueObj = new ObjectId(valueObj);
+                        }
                     }
                 }
                 else if (collection === 'comments' && command.path === 'authorId' || command.path === 'parentId') {
                     valueObj = new ObjectId(valueObj);
                 }
             }
-                    
+            
             switch (command.operation) {
                 case "append":
                     toChange = {};
                     valueObj._id = new ObjectId();
                     toChange[command.path] = valueObj;
-                    updateConfig = { 
+                    updateConfig = {
                         $push: toChange
                     };
                     if (collection === 'ideas') {

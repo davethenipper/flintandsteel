@@ -120,10 +120,11 @@ insertResult = db.ideas.insert(
                 _id: new ObjectId(),
                 text: 'Idea Owner',
                 authorId: userIds[0],
-                time: ISODate(),
+                timeCreated: ISODate(),
                 types: [{ name: 'Owner', _lowername: 'owner' }]
             }],
-            team: [{ _id: new ObjectId(), memberId: userIds[0] }]
+            team: [{ _id: new ObjectId(), memberId: userIds[0] }],
+            complexity: []
         },
         {
             title: 'Rick\'s Test Idea',
@@ -141,10 +142,19 @@ insertResult = db.ideas.insert(
                 _id: new ObjectId(),
                 text: 'Idea Owner',
                 authorId: userIds[1],
-                time: ISODate(),
+                timeCreated: ISODate(),
                 types: [{ name: 'Owner', _lowername: 'owner' }]
             }],
-            team: [{ _id: new ObjectId(), memberId: userIds[1] }]
+            team: [{ _id: new ObjectId(), memberId: userIds[1] }],
+            complexity: [{
+                stars: [{filled: true}, {filled: true}, {filled: true}, {filled: true}, {filled: false}],
+                value: 4,
+                authorId: userIds[1]
+            },{
+                stars: [{filled: true}, {filled: true}, {filled: false}, {filled: false}, {filled: false}],
+                value: 2,
+                authorId: userIds[0]
+            }]
         },
         {
             title: 'Dick\'s Test Idea',
@@ -162,10 +172,15 @@ insertResult = db.ideas.insert(
                 _id: new ObjectId(),
                 text: 'Idea Owner',
                 authorId: userIds[2],
-                time: ISODate(),
+                timeCreated: ISODate(),
                 types: [{ name: 'Owner', _lowername: 'owner' }]
             }],
-            team: [{ _id: new ObjectId(), memberId: userIds[2] }]
+            team: [{ _id: new ObjectId(), memberId: userIds[2] }],
+            complexity: [{
+                stars: [{filled: true}, {filled: true}, {filled: false}, {filled: false}, {filled: false}],
+                value: 2,
+                authorId: userIds[0]
+            }]
         }
     ]
 );

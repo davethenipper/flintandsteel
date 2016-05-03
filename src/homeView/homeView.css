@@ -1,13 +1,7 @@
-.homeview-image {
- height:100%;
-   width:100%;
-   background-image:url(Collaboration.jpg);/*your background image*/  
-   background-repeat:no-repeat;/*we want to have one single image not a repeated one*/  
-   background-size:cover;/*this sets the image to fullscreen covering the whole screen*/  
-   /*css hack for ie*/     
-   filter:progid:DXImageTransform.Microsoft.AlphaImageLoader(src='.Collaboration.jpg',sizingMethod='scale');
-   -ms-filter:"progid:DXImageTransform.Microsoft.AlphaImageLoader(src='image.jpg',sizingMethod='scale')";
 
+.cloud-container-padding {
+    padding-top: 20px;
+    padding-bottom: 40px;
 }
 .homeview-search {
     background:rgba(255,255,255,0.65);
@@ -31,10 +25,6 @@
     color:white;
 }
 
-
-img {
-    vertical-align: middle;
-}
 .img-responsive {
     display: block;
     height: auto;
@@ -336,130 +326,35 @@ img {
 body {
     position: relative;
 }
-.cards {
-    margin:30px;
-    perspective: 500;
-    -webkit-perspective: 500;
-    -moz-perspective: 500;
-    -ms-perspective: 500;
-    -o-perspective: 500;
-    width:200px;
-    height:200px;
-    background-color:#59A3FF;
-    transform-style:preserve-3d;
-    -webkit-transform-style:preserve-3d;
-    -moz-transform-style:preserve-3d;
-    -o-transform-style:preserve-3d;
-    position:absolute;
-    cursor:pointer;
-    /* Animate the transitions */
-    -webkit-transition:0.8s; text-align:center;
-    -moz-transition:0.8s; text-align:center;
-    -ms-transition:0.8s; text-align:center;
-    -o-transition:0.8s; text-align:center;
-    transition:0.8s; text-align:center;
-    
-}
-
-.flip {
-  transform:rotateY(180deg) scale(1,1);
-  -webkit-transform:rotateY(180deg) scale(1,1);
-  -moz-transform:rotateY(180deg);
-  -o-transform:rotateY(180deg);
-  -ms-transform:rotateY(180deg);
-  background-color:#FF5959;
-    
-}
-
-.container-card {
-    /* How pronounced should the 3D effects be */
-    perspective: 500;
-    -webkit-perspective: 500;
-    -moz-perspective: 500;
-    -ms-perspective: 500;
-    -o-perspective: 500;
-    width:200px;
-    height:200px;
-    position:relative;
-    /*Some UI */
-    border-radius:6px;
-    -webkit-border-radius:6px;
-    -moz-border-radius:6px;
-    -ms-border-radius:6px;
-    -o-border-radius:6px;
-   
-    vertical-align:middle;
-    cursor:pointer;
-}
-
-.box-front,.box-back {
-    /* Enable 3D transforms */
-    transform-style: preserve-3d;
-    -webkit-transform-style: preserve-3d;
-    -moz-transform-style: preserve-3d;
-    -ms-transform-style: preserve-3d;
-    -o-transform-style: preserve-3d;
-    transform-style: preserve-3d;
-     backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    -moz-backface-visibility: hidden;
-    -ms-backface-visibility: hidden;
-    -o-backface-visibility: hidden;
-     width:100%;
-    height:100%;
-    position:absolute;
-    /*
-    background-color:#0090d9;*/
-    background:rgba(154,10,10,0.65);
-    /* Animate the transitions */
-    -webkit-transition:0.8s; text-align:center;
-    -moz-transition:0.8s; text-align:center;
-    -ms-transition:0.8s; text-align:center;
-    -o-transition:0.8s; text-align:center;
-    transition:0.8s; text-align:center;
-    color:#FFF;
-    border-radius:6px;
-    -webkit-border-radius:6px;
-    -moz-border-radius:6px;
-    -ms-border-radius:6px;
-    -o-border-radius:6px;
-
-    }
-
-.box-back {
-    /* The back side is flipped 180 deg by default */
-    transform:rotateY(180deg);
-    -webkit-transform:rotateY(180deg);
-    -moz-transform:rotateY(180deg);
-    -ms-transform:rotateY(180deg);
-    -o-transform:rotateY(180deg);
-    /*background-color:#f35958;*/
-    text-align: left;
-    }
-
-.container-card:hover .box-front {
-    /* When the container is hovered, flip the front side and hide it .. */
-    transform:rotateY(180deg);
-    -webkit-transform:rotateY(180deg);
-    -moz-transform:rotateY(180deg);
-    -ms-transform:rotateY(180deg);
-    -o-transform:rotateY(180deg);
-    }
-
-.container-card:hover .box-back {
-    /* .. at the same time flip the back side into visibility */
-    transform:rotateY(360deg);
-    -webkit-transform:rotateY(360deg);
-    -moz-transform:rotateY(360deg);
-    -ms-transform:rotateY(360deg);
-    -o-transform:rotateY(360deg);
-    }
-.homeview-padding-faq-card {
-    padding-bottom:5px;
-    padding-top: 5px;
-    padding-right:5px;
-    padding-left:5px;
-}
-.containerCard-text-back {
+#wordcloud {
     margin: 10px;
+    height: 720px;
+    border: none;
+}
+#wordcloud span.w10, #wordcloud span.w9, #wordcloud span.w8, #wordcloud span.w7 {
+    text-shadow: 0px 1px 1px #ccc;
+}
+#wordcloud span.w3, #wordcloud span.w2, #wordcloud span.w1 {
+    text-shadow: 0px 1px 1px #fff;
+}
+#footer {
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+    width: 100%;
+    margin: 30px auto;
+    padding: 0.5em;
+    text-shadow: 0px 1px 1px #fff;
+    border-top: 1px dotted #ddd;
+}
+#footer a {
+    color: #0af;
+    text-decoration: none;
+}
+
+div #wordcloud {
+    font-family: "Helvetica", "Arial", sans-serif;
+    color: #09f;
+    overflow: hidden;
+    position: relative;
 }
